@@ -149,7 +149,7 @@ class Brain:
 		print("Network architecture:\n"+str(self.model))
 
 	def _load(self):
-		self.model.load_state_dict( torch.load("_data/model", map_location={'cuda:0': 'cpu'}) )
+		self.model.load_state_dict( torch.load("model", map_location={'cuda:0': 'cpu'}) )
 
 	def predict(self, s):
 		# s = Variable(torch.from_numpy(s).cuda())
