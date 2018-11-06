@@ -1,35 +1,33 @@
-import numpy as np
-import torch
-
-from consts import *
+import random
 
 class Pool():
-	def __init__(self, size):
-		self.data_s  = torch.FloatTensor(size, STATE_DIM)
-		self.data_a  = torch.LongTensor(size, 1)
-		self.data_r  = torch.FloatTensor(size, 1)
-		self.data_s_ = torch.FloatTensor(size, STATE_DIM)
+    def __init__(self, size):
+        self.size = size
+        self.data = [None] * size
+        self.idx  = 0
 
-		self.idx  = 0
-		self.size = size
+        self.sum_len = 0
 
-	def put(self, x):
-		s, a, r, s_ = x
-		size = len(s)
+        self.total = 0
 
-		self.data_s [self.idx:self.idx+size] = torch.from_numpy(s)
-		self.data_a [self.idx:self.idx+size] = torch.from_numpy(a)	
-		self.data_r [self.idx:self.idx+size] = torch.from_numpy(r)
-		self.data_s_[self.idx:self.idx+size] = torch.from_numpy(s_)
+    def put(self, x):
+        if(self.total >= self.size):
+            old_x = self.data[self.idx]
+            self.sum_len -= len(old_x[0])
 
-		self.idx = (self.idx + size) % self.size
+        self.sum_len += len(x[0])
 
-	def sample(self, size):
-		idx = torch.from_numpy(np.random.choice(self.size, size)).cuda()
-		return self.data_s[idx], self.data_a[idx], self.data_r[idx], self.data_s_[idx]
+        self.data[self.idx] = x
+        self.idx = (self.idx + 1) % self.size
+        self.total += 1
 
-	def cuda(self):
-		self.data_s  = self.data_s.cuda() 
-		self.data_a  = self.data_a.cuda() 
-		self.data_r  = self.data_r.cuda() 
-		self.data_s_ = self.data_s_.cuda()
+    ''' Sample a batch of #size episodes. '''
+    def sample(self, size):
+        return random.choices(self.data, k=size)
+
+    ''' Samples a batch of episodes. Size of total steps is close to #size.'''
+    def sample_steps(self, size):
+        avg_len = self.sum_len / self.size
+        eps_to_fetch = int(size / avg_len)
+
+        return random.choices(self.data, k=eps_to_fetch)

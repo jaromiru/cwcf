@@ -6,9 +6,6 @@
 import pandas as pd
 import numpy as np
 
-COL_COUNT = '_count'
-COL_LABEL = '_label'
-
 SEED = 998823
 #---
 np.random.seed(SEED)
@@ -21,15 +18,22 @@ data.iloc[:,-1:  ] = data.iloc[:,-1:  ].astype('int32') - 1
 
 print(data.head())
 
-TRAIN_SIZE = 36603
-VAL_SIZE   = 15688
-TEST_SIZE  = 58101
+TRAIN_SIZE = 200000
+VAL_SIZE   =  81012
+TEST_SIZE  = 300000
+
+# TRAIN_SIZE = 36603
+# VAL_SIZE   = 15688
+# TEST_SIZE  = 58101
 
 data = data.sample(frac=1)
 
 data_train = data.iloc[0:TRAIN_SIZE]
 data_val   = data.iloc[TRAIN_SIZE:TRAIN_SIZE+VAL_SIZE]
 data_test   = data.iloc[TRAIN_SIZE+VAL_SIZE:TRAIN_SIZE+VAL_SIZE+TEST_SIZE]
+
+print("Number of features:", data_train.shape[1] - 1)
+print("Classes:", data_train.iloc[:, -1].unique())
 
 print()
 print("Total len:", data.shape[0])

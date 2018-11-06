@@ -1,11 +1,30 @@
-load run_0.dat; load run_1.dat ; load run_2.dat ; load run_perf.dat
+load run_val_0.dat; load run_val_perf.dat; load run_trn_perf.dat
 
-figure('units','normalized','position',[.1 .1 .8 .8]);
-subplot(3,1,1); plot(run_0); title('State_0');
-subplot(3,1,2); plot(run_1); title('State_A');
-subplot(3,1,3); plot(run_2); title('State_B');
+% f = figure('units','normalized','position',[0 0 1 1]);
+f = figure('units','pixels','position',[0 0 400 800]);
+set(f, "defaultlinelinewidth", 1);
 
-figure('units','normalized','position',[.1 .1 .8 .8]);
-subplot(3,1,1); plot(run_perf(:, 1)); title('Average reward');
-subplot(3,1,2); plot(run_perf(:, 2)); title('Average length');
-subplot(3,1,3); plot(run_perf(:, 3)); title('Average correct');
+subplot(5,1,1); plot(run_val_0); title('Q-values in s_0');
+
+subplot(5,1,2); hold on; 
+plot(run_trn_perf(:, 1), 'g');
+plot(run_val_perf(:, 1)); 
+title('Reward');
+legend("training", "validation")
+legend("boxoff")
+
+
+subplot(5,1,3); hold on; 
+plot(run_val_perf(:, 2), 'b'); plot(run_val_perf(:, 3), 'r'); 
+title('Length / Cost');
+legend("length", "cost")
+legend("boxoff")
+
+subplot(5,1,4); area(run_val_perf(:, 4)); title('HPC usage');
+
+subplot(5,1,5); hold on; 
+plot(run_trn_perf(:, 5), 'g');
+plot(run_val_perf(:, 5));
+title('Accuracy');
+legend("training", "validation")
+legend("boxoff")

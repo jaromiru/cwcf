@@ -1,70 +1,174 @@
 import numpy as np
-
 import torch
-from torch.autograd import Variable
 
-import sys
+from config import config
 
-from consts import *
 from net import Net
+import utils
 
 #==============================
 class Brain:
-	def __init__(self, pool):
-		self.pool = pool
+    def __init__(self, pool):
+        self.pool = pool
 
-		self.model  = Net()
-		self.model_ = Net()
+        self.model  = Net()
+        self.model_ = Net()
 
-		print("Network architecture:\n"+str(self.model))
+        self.epsilon = config.PI_EPSILON_START
+        self.lr = config.OPT_LR
 
-	def _load(self):
-		self.model.load_state_dict( torch.load("model") )
-		self.model_.load_state_dict( torch.load("model_") )
+        print("Network architecture:\n" + str(self.model))
 
-	def _save(self):
-		torch.save(self.model.state_dict(), "model")
-		torch.save(self.model_.state_dict(), "model_")
+    def _load(self, file='model'):
+        self.model.load_state_dict( torch.load(file) )
+        self.model_.load_state_dict( torch.load(file + "_") )
 
-	def predict_pt(self, s, target):
-		s = Variable(s)
+    def _save(self, file='model'):
+        torch.save(self.model.state_dict(), file)
+        torch.save(self.model_.state_dict(),file + "_")
 
-		if target:
-			return self.model_(s).data
-		else:
-			return self.model(s).data
+    def predict_pt(self, s, target):
+        if target:
+            return self.model_(s)
+        else:
+            return self.model(s)
 
-	def predict_np(self, s, target=False):
-		s = torch.from_numpy(s).cuda()
-		res = self.predict_pt(s, target)
-		return res.cpu().numpy()
+    def predict_np(self, s, target=False):
+        s = torch.from_numpy(s).cuda()
+        q = self.predict_pt(s, target)
 
-	def train(self):
-		s, a, r, s_ = self.pool.sample(BATCH_SIZE)
+        q = q.detach().cpu().numpy()
 
-		# extract the mask
-		m_ = torch.FloatTensor(BATCH_SIZE, ACTION_DIM).zero_().cuda()
-		m_[:, CLASSES:] = s_[:, FEATURE_DIM:]
+        return q
 
-		# compute
-		q_current = self.predict_pt(s_, target=False) - (MAX_MASK_CONST * m_) # masked actions do not influence the max
-		q_target  = self.predict_pt(s_, target=True)
+    def train(self):
+        batch = self.pool.sample_steps(config.BATCH_SIZE)
 
-		_, amax = q_current.max(1, keepdim=True)
-		q_ = q_target.gather(1, amax)
+        _s, _a, _r, _u, _na, _x, _y = zip(*batch)
 
-		q_[ a < CLASSES ] = 0
-		q_ = q_ + r
+        _s = np.vstack(_s)
+        _a = np.concatenate(_a).reshape(-1, 1)
+        _r = np.concatenate(_r)
+        _u = np.concatenate(_u)
+        _na = np.vstack(_na).astype(np.float32)
 
-		# bound the values to theoretical q function range
-		q_.clamp_(-1, 0)
+        # push to GPU
+        s = torch.from_numpy(_s).cuda()
+        a = torch.from_numpy(_a).cuda()
+        r = torch.from_numpy(_r).cuda()
+        u = torch.from_numpy(_u).cuda()
+        na = torch.from_numpy(_na).cuda()
 
-		self.model.train_network(s, a, q_)
-		self.model_.copy_weights(self.model)
+        batch_len = _s.shape[0]
 
-	def update_lr(self, epoch):
-		lr = OPT_LR * (LR_SC_FACTOR ** (epoch // LR_SC_EPOCHS))
-		lr = max(lr, LR_SC_MIN)
+        m = na
 
-		self.model.set_lr(lr)
-		print("Setting LR:", lr)
+        # compute
+        q_orig = self.predict_pt(s, target=False)
+        q_current = q_orig.detach() - (config.MAX_MASK_CONST * m) 					# unavailable actions do not influence the max
+
+        q_target = self.predict_pt(s, target=True)
+        q_target = q_target.detach()
+
+        _, a_max = q_current.max(dim=1, keepdim=True)
+        a_count = config.ACTION_DIM - m.sum(dim=1, keepdim=True)
+
+        p_matrix = (1.0 - m) * (self.epsilon / a_count)											# matrix of p(a|s)
+        p_matrix.scatter_(1, a_max, (1 - self.epsilon) + (self.epsilon / a_count))				# p(a* | s)
+
+        p = p_matrix.gather(1, a).view(-1)														# p(a|s)
+
+        q_estm = torch.sum(p_matrix * q_target, dim=1, keepdim=False)   					 	# E_pi[ Q(s, *) ]
+        q_perf = q_target.gather(1, a).view(-1)												    # performed value
+
+        c = config.LAMBDA * (p / u).clamp_(max=1.0)
+
+        # compute q in a parallel way
+        q = torch.cuda.FloatTensor(batch_len)
+
+        terminal = torch.ones(batch_len, dtype=torch.float32)   # terminal flag (0 when terminal)
+        idxs     = torch.zeros(len(batch), dtype=torch.int64)
+
+        max_ep_len = 0
+        start = 0
+
+        for idx in range(len(batch)):
+            ep_len = len(batch[idx][0])
+            end = start + ep_len - 1
+            start = end + 1
+
+            terminal[end] = 0.
+            idxs[idx] = end
+            max_ep_len = max(max_ep_len, ep_len)
+
+        terminal = terminal.cuda()
+        idxs = idxs.cuda()
+
+        q[idxs] = r[idxs]
+        for i in range(1, max_ep_len):
+            idxs -= 1
+            q[idxs] = r[idxs] + terminal[idxs] * config.GAMMA * q_estm[idxs+1] + terminal[idxs] * config.GAMMA * c[idxs+1] * (q[idxs+1] - q_perf[idxs+1])
+
+        q.clamp_(max=0)		# bind the values to theoretical q function range
+
+        # train
+        self.model.train_pred(q_orig, a, q)
+        self.model_.copy_weights(self.model)
+
+    @staticmethod
+    def _get_batch(env, size):
+        s, x, y, p, c = env._get_random_batch(size, config.PRETRAIN_ZERO_PROB)
+
+        q_c = np.full((size, config.TERMINAL_ACTIONS), config.REWARD_INCORRECT, dtype=np.float32)
+        q_c[np.arange(size), y] = config.REWARD_CORRECT
+
+        if config.USE_HPC:
+            q_c[p == y, config.HPC_ACTION] = config.REWARD_CORRECT
+            q_c[:, config.HPC_ACTION] -= c
+
+        # make it cuda
+        s   = torch.from_numpy(s).cuda()
+        q_c = torch.from_numpy(q_c).cuda()
+
+        return s, q_c
+
+    def pretrain(self, env):
+        test_s, test_q_c = self._get_batch(env, config.PRETRAIN_BATCH)
+
+        last_loss = 9999.
+        self.model.set_lr(config.PRETRAIN_LR)
+        for i in range(config.PRETRAIN_EPOCHS):
+            utils.print_progress(i, config.PRETRAIN_EPOCHS, step=100)
+
+            # print loss
+            if utils.is_time(i, 100):
+                q = self.model(test_s)
+
+                loss_c = self.model.get_loss_c(q, test_q_c)
+                print("\nLoss: {}".format(loss_c.data.item()))
+
+                if last_loss <= loss_c:     # stop early
+                    break
+
+                last_loss = loss_c
+
+            s, q_c = self._get_batch(env, config.PRETRAIN_BATCH)
+            self.model.train_c(s, q_c)
+
+        self.model_.copy_weights(self.model, rho=1.0)
+
+    def set_lr(self, lr):
+        self.lr = max(lr, config.OPT_LR_MIN)
+        self.model.set_lr(self.lr)
+        print("Setting LR: {:.2e}".format(self.lr))        
+
+    def lower_lr(self):
+        self.lr = max(self.lr * config.OPT_LR_FACTOR, config.OPT_LR_MIN)
+        self.model.set_lr(self.lr)
+        print("Setting LR: {:.2e}".format(self.lr))
+
+    def update_epsilon(self, epoch):
+        if epoch >= config.PI_EPSILON_EPOCHS:
+            self.epsilon = config.PI_EPSILON_END
+        else:
+            self.epsilon = config.PI_EPSILON_START + epoch * (config.PI_EPSILON_END - config.PI_EPSILON_START) / config.PI_EPSILON_EPOCHS

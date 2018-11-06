@@ -1,0 +1,7 @@
+DATASET = 'wine'
+
+CLASSES  = 3
+FEATURES = 13
+
+NN_SIZE    = 128
+DIFFICULTY = 1000
