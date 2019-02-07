@@ -1,4 +1,14 @@
-This is a source code for AAAI 2019 paper *Classification with Costly Features using Deep Reinforcement Learning* wrote by *Jaromír Janisch*, *Tomáš Pevný* and *Viliam Lisý*, available at https://arxiv.org/abs/1711.07364.
+This is a source code for AAAI 2019 paper *Classification with Costly Features using Deep Reinforcement Learning* wrote by *Jaromír Janisch*, *Tomáš Pevný* and *Viliam Lisý*: [paper](https://jaromiru.com/media/about/aaai19_cwcf_paper.pdf) / [slides](https://jaromiru.com/media/about/aaai19_cwcf_talk.pdf) / [poster](https://jaromiru.com/media/about/aaai19_cwcf_poster.pdf) / [code](https://github.com/jaromiru/cwcf) / [blog](https://jaromiru.com/2019/02/07/hands-on-classification-with-costly-features/)
+
+Cite as:
+```
+@inproceedings{janisch2019classification,
+  title={Classification with Costly Features using Deep Reinforcement Learning},
+  author={Janisch, Jaromír and Pevný, Tomáš and Lisý, Viliam},
+  booktitle={AAAI Conference on Artificial Intelligence},
+  year={2019}
+}
+```
 
 **Prerequisites:**
 - cuda capable hardware
