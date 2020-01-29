@@ -1,10 +1,13 @@
 import numpy as np
 import time
 
+import sklearn.metrics as metrics
+
 from config import config
 
 from agent import PerfAgent
 from env import SeqEnvironment
+import utils
 
 #==============================
 class Log:
@@ -66,7 +69,29 @@ class Log:
 
         print("Perf.: {:.0f} gen_smp/s, {:.1f} upd/s, {:.1f} upd_steps/s".format(fps_smpl, fps_updt, fps_updt_t))
 
-    def log_perf(self, histogram=False):
+    def eval_avg_cost(self):
+        env = SeqEnvironment(self.data, self.hpc_p, self.costs)
+        agent = PerfAgent(env, self.brain)
+
+        _fc   = 0.
+
+        while True:
+            s, a, r, s_, done, info = agent.step()
+
+            if np.all(done == -1):
+                break
+
+            finished   = (done ==  1)       # episode finished
+            terminated = (done == -1)       # no more data
+
+            _fc   += np.sum(info['fc']) + np.sum(info['hpc_fc'])
+
+        data_len = len(self.data)
+        _fc    /= data_len
+
+        return _fc
+
+    def log_perf(self, histogram=False, verbose=False):
         env = SeqEnvironment(self.data, self.hpc_p, self.costs)
         agent = PerfAgent(env, self.brain)
 
@@ -79,9 +104,13 @@ class Log:
         _lens = []
         _lens_hpc = []
 
+        pred_y = []
+        true_y = []
+
+        # f_cnt = 0
         while True:
             # utils.print_progress(np.sum(self.done), self.agents, step=1)
-            s, a, r, s_, done, info = agent.step()
+            s, a, r, s_, w, done, info = agent.step()
 
             if np.all(done == -1):
                 break
@@ -89,11 +118,20 @@ class Log:
             finished   = (done ==  1)		# episode finished
             terminated = (done == -1)		# no more data
 
-            _r    += np.sum(r[~terminated])
-            _fc   += np.sum(r[~finished]) + np.sum(info['hpc_fc'])
-            _corr += np.sum(info['corr'])
-            _len  += np.sum(~terminated)
-            _hpc  += np.sum(info['hpc'])
+            # f_cnt += np.sum(finished)
+            # utils.print_progress(f_cnt, len(self.data))
+
+            # rescale feature costs with lambda
+            r[~finished] *= config.FEATURE_FACTOR 
+
+            _r    += np.sum( (r * w)[~terminated] ) # TODO
+            _fc   += np.sum( (info['fc']) + np.sum(info['hpc_fc']) * w )
+            _corr += np.sum( info['corr'] * w )
+            _len  += np.sum((~terminated) * w )
+            _hpc  += np.sum( info['hpc'] * w )
+
+            pred_y.extend( filter(lambda x: x is not None, info['pred_y']) )
+            true_y.extend( filter(lambda x: x is not None, info['true_y']) )
 
             if histogram:
                 finished_hpc   = finished * info['hpc']
@@ -104,7 +142,7 @@ class Log:
 
         data_len = len(self.data)
         _r    /= data_len
-        _fc   /= data_len * config.FEATURE_FACTOR * -1
+        _fc   /= data_len
         _corr /= data_len
         _len  /= data_len
         _hpc  /= data_len
@@ -126,5 +164,18 @@ class Log:
             with open('run_{}_histogram_hpc.dat'.format(self.log_name), 'w') as file:
                 for x in _lens_hpc:
                     file.write("{} ".format(x))
+
+        if verbose:
+            conf_matrix = metrics.confusion_matrix(true_y, pred_y)
+            print("Confusion matrix:")
+            print(conf_matrix)
+
+            print("Classification report:")
+            print(metrics.classification_report(true_y, pred_y))
+
+            # compute balanced accuracy
+            cls_acc = np.diag(conf_matrix) / np.sum(conf_matrix, 1) # accuracy per class
+            cls_avg = np.sum(cls_acc) / conf_matrix.shape[0]
+            print("Rebalanced accuracy: {}".format(cls_avg))
 
         return _r, _len, _fc, _hpc, _corr

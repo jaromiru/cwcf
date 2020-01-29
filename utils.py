@@ -7,6 +7,9 @@ def print_progress(i, total, step=100):
 def is_time(epoch, trigger):
     return (trigger > 0) and (epoch % trigger == 0)
 
+def default(value, default):
+    return default if value is None else value
+
 class Fps():
     def start(self, starti=0):
         self.time  = time.time()
@@ -22,3 +25,10 @@ class Fps():
         self.lasti = i
 
         return diff_i / diff_t
+
+class ZeroObj():
+    def __init__(self):
+        self.values = self
+
+    def __getitem__(self, key):
+        return 0

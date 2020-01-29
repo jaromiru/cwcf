@@ -12,9 +12,15 @@ class Config:
         #================== GLOBAL SETTING
         self.BLANK_INIT = not args.load_progress
         self.USE_HPC    = args.use_hpc
+        self.HARD_BUDGET = args.hard_budget
         self.PRETRAIN   = args.pretrain
         self.SEED       = args.seed
-        self.FEATURE_FACTOR = args.flambda
+        self.FEATURE_FACTOR = args.target if args.target_type == 'lambda' else 0.
+        self.TARGET_COST = args.target
+        self.TARGET_TYPE = args.target_type
+        self.MISSING_GRAD = args.missing_grad
+        self.REWEIGHT   = args.reweight
+        self.DEVICE     = args.device
 
         # ================== DATASET
         self.DATA_FILE = '../data/' + dataset.DATASET + '-train'
@@ -35,19 +41,21 @@ class Config:
 
         # ================== RL
         self.REWARD_CORRECT   =  0
-        self.REWARD_INCORRECT = -1
+        self.REWARD_INCORRECT = [-1] * self.CLASSES
 
         self.GAMMA  = 1.0
         self.LAMBDA = 1.0
 
         # ================== TRAINING
         self.AGENTS = 1000
+        self.EPOCH_STEPS = 1
 
         self.MAX_TRAINING_EPOCHS = 100 * dataset.DIFFICULTY
         self.EVALUATE_STEPS   = 1 * dataset.DIFFICULTY        # compute r_avg over this many steps
-        self.VALIDATION_FAILS = 3                             # fail 3 times to increase validation error to stop
-
-        self.EPOCH_STEPS = 1
+        
+        self.ACCURACY_CHECK   = 4       # check back 4 steps to improve accuracy
+        self.LAGRANGIAN_CHECK_TRESHOLD = 1e-4    # lagrangian is stable
+        self.LAGRANGIAN_CHECK_TIMES    = 3       # lagrangian is stable
 
         self.EPSILON_START  = 1.00
         self.EPSILON_END    = 0.10
@@ -61,7 +69,6 @@ class Config:
         # ================== LOG
         self.LOG_TRACKED_STATES = [np.zeros((2, self.FEATURE_DIM))]
         self.LOG_EPOCHS = 0.1 * dataset.DIFFICULTY           # states prediction will be logged every LOG_EPOCHS
-        self.LOG_PERF_EPOCHS = 0.1 * dataset.DIFFICULTY
         self.LOG_PERF_VAL_SIZE = -1
 
         # ================== NN
@@ -72,12 +79,18 @@ class Config:
         self.NN_HIDDEN_LAYERS = 3
 
         self.OPT_LR = 5.0e-4
-        self.OPT_L2 = 0.
+        self.OPT_L2 = 0.        
         self.OPT_ALPHA = 0.95
         self.OPT_MAX_NORM = 1.0
 
-        self.OPT_LR_FACTOR =  0.3
-        self.OPT_LR_MIN = 1.0e-7
+        self.OPT_LR_MIN = 5.0e-7
+        self.OPT_LR_FACTOR =  0.5
+        self.OPT_LR_STEPS = 10 * dataset.DIFFICULTY
+
+        self.OPT_LAMBDA_LR = 1e-1
+        self.OPT_LAMBDA_LR_MIN = 1e-4
+        self.OPT_LAMBDA_EPOCHS = 0.1 * dataset.DIFFICULTY # update lambda every x epochs
+        self.OPT_LAMBDA_GAMMA = 0.1 # momentum
 
         self.TARGET_RHO = 0.01
 
@@ -91,7 +104,7 @@ class Config:
 
         # ================== AUX
         self.SAVE_EPOCHS = 0.1 * dataset.DIFFICULTY
-        self.MAX_MASK_CONST = 1.e6
+        self.MAX_MASK_CONST = 1.e12
 
         if hasattr(dataset, 'override'):
             for attr in vars(dataset.override):

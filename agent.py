@@ -15,17 +15,20 @@ class Agent():
         self.S   = np.zeros((config.AGENTS, config.FEATURE_DIM+1, 2, config.FEATURE_DIM), dtype=np.float32)
         self.A   = np.zeros((config.AGENTS, config.FEATURE_DIM+1), dtype=np.int64)
         self.R   = np.zeros((config.AGENTS, config.FEATURE_DIM+1), dtype=np.float32)
-        self.U   = np.zeros((config.AGENTS, config.FEATURE_DIM+1), dtype=np.float32)
-        self.NA  = np.zeros((config.AGENTS, config.FEATURE_DIM+1, config.ACTION_DIM), dtype=np.bool)
+        self.U   = np.zeros((config.AGENTS, config.FEATURE_DIM+1), dtype=np.float32)    
+        self.NA  = np.zeros((config.AGENTS, config.FEATURE_DIM+1, config.ACTION_DIM), dtype=np.bool)        # all history is not needed
+        self.NA_GRAD = np.zeros((config.AGENTS, config.FEATURE_DIM+1, config.ACTION_DIM), dtype=np.bool)            
 
-        s, na = self.env.reset()
+        s, na, na_grad = self.env.reset()
+
         self.S[all_agents, self.idx] = s
         self.NA[all_agents, self.idx] = na
+        self.NA_GRAD[all_agents, self.idx] = na_grad
 
     def act(self, s, na):
         q = self.brain.predict_np(s)
-        p = q - config.MAX_MASK_CONST * na 	# select an action not considering those already performed
-        a = np.argmax(p, axis=1)
+        q[na] = -np.inf
+        a = np.argmax(q, axis=1)
 
         rand_agents = np.random.rand(config.AGENTS) < self.epsilon
         rand_number = np.random.rand(config.AGENTS)					# rand() call is expensive, better to do it at once
@@ -54,7 +57,7 @@ class Agent():
         na = self.NA[all_agents, self.idx]
 
         a, u = self.act(s, na)
-        s_, r, na_, done, info = self.env.step(a)
+        s_, r, na_, na_grad_, w, done, info = self.env.step(a)
 
         self.A[all_agents, self.idx] = a
         self.R[all_agents, self.idx] = r
@@ -67,20 +70,24 @@ class Agent():
             _a = self.A[i, :idx].copy()
             _r = self.R[i, :idx].copy()
             _u = self.U[i, :idx].copy()
-            _na = self.NA[i, :idx].copy()
+            _na_grad = self.NA_GRAD[i, :idx].copy()
 
             # extract the true state
             _x = np.broadcast_to(self.env.x[i].copy(), (idx, config.FEATURE_DIM))
             _y = np.repeat(self.env.y[i], idx)
 
-            self.pool.put( (_s, _a, _r, _u, _na, _x, _y) )
+            # prepare bias correction
+            _w = np.repeat(w[i], idx)
+
+            self.pool.put( (_s, _a, _r, _u, _na_grad, _w, _x, _y) )
 
         self.idx = (done == 0) * (self.idx + 1)     # advance idx by 1 and reset to 0 for finished episodes
 
         self.NA[all_agents, self.idx] = na_     # unavailable actions
+        self.NA_GRAD[all_agents, self.idx] = na_grad_     # unavailable actions for gradient computation
         self.S[all_agents,  self.idx] = s_
 
-        return s, a, r, s_, done, info
+        return s, a, r, s_, w, done, info
 
     def update_epsilon(self, epoch):
         if epoch >= config.EPSILON_EPOCHS:
@@ -103,8 +110,8 @@ class PerfAgent(Agent):
 
     def act(self, s, na):
         q = self.brain.predict_np(s)
-        p = q - config.MAX_MASK_CONST * na 	# select an action not considering those already performed
-        a = np.argmax(p, axis=1)
+        q[na] = -np.inf
+        a = np.argmax(q, axis=1)
 
         return a, 1.0
 
@@ -113,11 +120,11 @@ class PerfAgent(Agent):
         na = self.NA[all_agents, self.idx]
 
         a, u = self.act(s, na)
-        s_, r, na_, done, info = self.env.step(a)
+        s_, r, na_, w, done, info = self.env.step(a)
 
         self.idx = (done == 0) * (self.idx + 1)     # advance idx by 1 and reset to 0 for finished episodes
 
         self.NA[all_agents, self.idx] = na_         # unavailable actions
         self.S[all_agents, self.idx] = s_
 
-        return s, a, r, s_, done, info
+        return s, a, r, s_, w, done, info

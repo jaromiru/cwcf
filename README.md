@@ -1,5 +1,14 @@
-This is a source code for AAAI 2019 paper *Classification with Costly Features using Deep Reinforcement Learning* wrote by *Jaromír Janisch*, *Tomáš Pevný* and *Viliam Lisý*: [paper](https://jaromiru.com/media/about/aaai19_cwcf_paper.pdf) / [slides](https://jaromiru.com/media/about/aaai19_cwcf_talk.pdf) / [poster](https://jaromiru.com/media/about/aaai19_cwcf_poster.pdf) / [code](https://github.com/jaromiru/cwcf) / [blog](https://jaromiru.com/2019/02/07/hands-on-classification-with-costly-features/)
+This is an updated source code for paper *Classification with Costly Features as a Sequential Decision-Making Problem* wrote by *Jaromír Janisch*, *Tomáš Pevný* and *Viliam Lisý*: [paper](https://arxiv.org/abs/1909.02564).
 
+This version is enhanced with multiple options, namely:
+- lagrangian optimization of lambda
+- possibility of choosing an average or hard budget
+- working with missing features (nans in the training data)
+- reweighting of the dataset
+
+For *Classification with Costly Features using Deep Reinforcement Learning* version, go to the [master](https://github.com/jaromiru/cwcf) branch.
+
+<!-- 
 Cite as:
 ```
 @inproceedings{janisch2019classification,
@@ -8,7 +17,7 @@ Cite as:
   booktitle={AAAI Conference on Artificial Intelligence},
   year={2019}
 }
-```
+``` -->
 
 **Prerequisites:**
 - cuda capable hardware
@@ -19,7 +28,10 @@ Cite as:
 **Usage:**
 - use tools `tools/conv_*.py` to prepare datasets; read the headers of those files; data is expected to be in `../data`
 - pretrained HPC models are in `trained_hpc`, or you can use `tools/hpc_svm.py` to recreate them; they are needed in `../data`
-- run `python3.6 main.py --dataset [dataset] --flambda [lambda] --use_hpc [0|1] --pretrain [0|1]`, choose `dataset` from `config_datasets/`
+- run `python3.6 main.py [dataset] [target]`, choose `dataset` from `config_datasets/`
+- set `-target_type` to `lambda` or `cost`, the latter automatically finds suitable lambda with lagrangian optimization (see [this article](https://arxiv.org/abs/1909.02564))
+- set `-hard_budget` for strict budget per sample (default is average budget)
+- run `python3.6 main.py --help` for additional options
 - the run will create multiple log files `run*.dat`
 - you can use octave or matlab to analyze them with `tools/debug.m`
 - you can also evaluate the agent on the test set with `eval.py --dataset [dataset] --flambda [lambda]`

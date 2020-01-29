@@ -20,8 +20,13 @@ class Brain:
         print("Network architecture:\n" + str(self.model))
 
     def _load(self, file='model'):
-        self.model.load_state_dict( torch.load(file) )
-        self.model_.load_state_dict( torch.load(file + "_") )
+        if config.DEVICE == 'auto':
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            device = torch.device(config.DEVICE)
+
+        self.model.load_state_dict( torch.load(file, map_location=device) )
+        self.model_.load_state_dict( torch.load(file + "_", map_location=device) )
 
     def _save(self, file='model'):
         torch.save(self.model.state_dict(), file)
@@ -34,7 +39,7 @@ class Brain:
             return self.model(s)
 
     def predict_np(self, s, target=False):
-        s = torch.from_numpy(s).cuda()
+        s = torch.from_numpy(s)
         q = self.predict_pt(s, target)
 
         q = q.detach().cpu().numpy()
@@ -44,36 +49,53 @@ class Brain:
     def train(self):
         batch = self.pool.sample_steps(config.BATCH_SIZE)
 
-        _s, _a, _r, _u, _na, _x, _y = zip(*batch)
+        _s, _a, _r, _u, _na, _w, _x, _y = zip(*batch)
 
         _s = np.vstack(_s)
-        _a = np.concatenate(_a).reshape(-1, 1)
+        _a = np.concatenate(_a)
         _r = np.concatenate(_r)
         _u = np.concatenate(_u)
         _na = np.vstack(_na).astype(np.float32)
+        _w = np.concatenate(_w)
+
+        # rescale reward
+        _r[_a >= config.TERMINAL_ACTIONS] *= config.FEATURE_FACTOR
+        _a = _a.reshape(-1, 1)
+        # _x = np.vstack(_x)
+        # _y = np.concatenate(_y)
+
+        # ratio = np.mean(_y == 0)
+        # print("CLS 0: {:.2f}".format(ratio))
 
         # push to GPU
-        s = torch.from_numpy(_s).cuda()
-        a = torch.from_numpy(_a).cuda()
-        r = torch.from_numpy(_r).cuda()
-        u = torch.from_numpy(_u).cuda()
-        na = torch.from_numpy(_na).cuda()
+        s = torch.from_numpy(_s).to(self.model.device)
+        a = torch.from_numpy(_a).to(self.model.device)
+        r = torch.from_numpy(_r).to(self.model.device)
+        u = torch.from_numpy(_u).to(self.model.device)
+        na = torch.from_numpy(_na).to(self.model.device)   # actions not available
+        w = torch.from_numpy(_w).to(self.model.device)
+
+        # x = torch.from_numpy(_x).to(self.model.device)
+        # y = torch.from_numpy(_y).to(self.model.device)
 
         batch_len = _s.shape[0]
 
-        m = na
+        # extract the mask
+        # m = torch.FloatTensor(batch_len, ACTION_DIM).zero_().to(self.model.device)
+        # m[:, TERMINAL_ACTIONS:] = s[:, 1]
+        # either use 'm' or 'na' for to use unavailable features information or not
 
         # compute
         q_orig = self.predict_pt(s, target=False)
-        q_current = q_orig.detach() - (config.MAX_MASK_CONST * m) 					# unavailable actions do not influence the max
+        q_current = q_orig.detach() - (config.MAX_MASK_CONST * na) 			      		        # unavailable actions do not influence the max
 
         q_target = self.predict_pt(s, target=True)
         q_target = q_target.detach()
 
         _, a_max = q_current.max(dim=1, keepdim=True)
-        a_count = config.ACTION_DIM - m.sum(dim=1, keepdim=True)
+        a_count = config.ACTION_DIM - na.sum(dim=1, keepdim=True)
 
-        p_matrix = (1.0 - m) * (self.epsilon / a_count)											# matrix of p(a|s)
+        p_matrix = (1.0 - na) * (self.epsilon / a_count)						          		# matrix of p(a|s)
         p_matrix.scatter_(1, a_max, (1 - self.epsilon) + (self.epsilon / a_count))				# p(a* | s)
 
         p = p_matrix.gather(1, a).view(-1)														# p(a|s)
@@ -84,8 +106,6 @@ class Brain:
         c = config.LAMBDA * (p / u).clamp_(max=1.0)
 
         # compute q in a parallel way
-        q = torch.cuda.FloatTensor(batch_len)
-
         terminal = torch.ones(batch_len, dtype=torch.float32)   # terminal flag (0 when terminal)
         idxs     = torch.zeros(len(batch), dtype=torch.int64)
 
@@ -101,9 +121,10 @@ class Brain:
             idxs[idx] = end
             max_ep_len = max(max_ep_len, ep_len)
 
-        terminal = terminal.cuda()
-        idxs = idxs.cuda()
+        terminal = terminal.to(self.model.device)
+        idxs = idxs.to(self.model.device)
 
+        q = torch.zeros(batch_len, dtype=torch.float32, device=self.model.device)
         q[idxs] = r[idxs]
         for i in range(1, max_ep_len):
             idxs -= 1
@@ -111,14 +132,24 @@ class Brain:
 
         q.clamp_(max=0)		# bind the values to theoretical q function range
 
+        # compute targets for A_c actions
+        # q_c = np.full((batch_len, CLASSES), REWARD_INCORRECT, dtype=np.float32)
+        # q_c[np.arange(batch_len), _y] = REWARD_CORRECT
+        # q_c = torch.from_numpy(q_c).to(self.model.device)
+
         # train
-        self.model.train_pred(q_orig, a, q)
+        self.model.train_pred(q_orig, a, q, w)
         self.model_.copy_weights(self.model)
 
-    @staticmethod
-    def _get_batch(env, size):
-        s, x, y, p, c = env._get_random_batch(size, config.PRETRAIN_ZERO_PROB)
+    # TODO rebalanced pretraining?
+    def _get_batch(self, env, size):
+        s, x, y, p, c, w = env._get_random_batch(size, config.PRETRAIN_ZERO_PROB)
 
+        # print("Class distribution:")
+        # for y_ in np.unique(y):
+        #     print(np.mean(y==y_))
+
+        # TODO
         q_c = np.full((size, config.TERMINAL_ACTIONS), config.REWARD_INCORRECT, dtype=np.float32)
         q_c[np.arange(size), y] = config.REWARD_CORRECT
 
@@ -127,35 +158,49 @@ class Brain:
             q_c[:, config.HPC_ACTION] -= c
 
         # make it cuda
-        s   = torch.from_numpy(s).cuda()
-        q_c = torch.from_numpy(q_c).cuda()
+        s   = torch.from_numpy(s).to(self.model.device)
+        q_c = torch.from_numpy(q_c).to(self.model.device)
 
-        return s, q_c
+        if type(w) is not float:
+            w = torch.from_numpy(w).to(self.model.device)
+
+        # x   = torch.from_numpy(x).to(self.model.device)
+        # y   = torch.from_numpy(y.astype(np.int64)).to(self.model.device) # loss_cross expects LongTensor
+
+        return s, q_c, w
 
     def pretrain(self, env):
-        test_s, test_q_c = self._get_batch(env, config.PRETRAIN_BATCH)
+        test_s, test_q_c, test_w = self._get_batch(env, config.PRETRAIN_BATCH)
 
         last_loss = 9999.
-        self.model.set_lr(config.PRETRAIN_LR)
         for i in range(config.PRETRAIN_EPOCHS):
             utils.print_progress(i, config.PRETRAIN_EPOCHS, step=100)
 
             # print loss
             if utils.is_time(i, 100):
-                q = self.model(test_s)
+                lr = config.PRETRAIN_LR / (1 + i / 100)
+                self.model.set_lr(lr)
 
-                loss_c = self.model.get_loss_c(q, test_q_c)
-                print("\nLoss: {}".format(loss_c.data.item()))
+                q = self.model(test_s)
+                loss_c = self.model.get_loss_c(q, test_q_c, test_w)
+                print("\nLoss: {:.4e} LR: {:.2e}".format(loss_c.data.item(), lr))
 
                 if last_loss <= loss_c:     # stop early
                     break
 
                 last_loss = loss_c
 
-            s, q_c = self._get_batch(env, config.PRETRAIN_BATCH)
-            self.model.train_c(s, q_c)
+            s, q_c, w = self._get_batch(env, config.PRETRAIN_BATCH)
+            self.model.train_c(s, q_c, w)
 
         self.model_.copy_weights(self.model, rho=1.0)
+
+    # def update_lr(self, epoch):
+    #     lr = config.OPT_LR * (config.OPT_LR_FACTOR ** (epoch // config.LR_SC_EPOCHS))
+    #     lr = max(lr, config.LR_SC_MIN)
+
+    #     self.model.set_lr(lr)
+    #     print("Setting LR: {:.2e}".format(lr))
 
     def set_lr(self, lr):
         self.lr = max(lr, config.OPT_LR_MIN)
