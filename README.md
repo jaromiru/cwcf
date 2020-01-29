@@ -1,5 +1,7 @@
 This is a source code for AAAI 2019 paper *Classification with Costly Features using Deep Reinforcement Learning* wrote by *Jaromír Janisch*, *Tomáš Pevný* and *Viliam Lisý*: [paper](https://jaromiru.com/media/about/aaai19_cwcf_paper.pdf) / [slides](https://jaromiru.com/media/about/aaai19_cwcf_talk.pdf) / [poster](https://jaromiru.com/media/about/aaai19_cwcf_poster.pdf) / [code](https://github.com/jaromiru/cwcf) / [blog](https://jaromiru.com/2019/02/07/hands-on-classification-with-costly-features/)
 
+There is an enhanced version of the article under name *Classification with Costly Features as a Sequential Decision-Making Problem* [paper](https://arxiv.org/abs/1909.02564), which analyzes more settings (hard budget, lagrangian optimization of lambda and missing features). The code is available in the [lagrange](https://github.com/jaromiru/cwcf/tree/lagrange) branch of this repository.
+
 Cite as:
 ```
 @inproceedings{janisch2019classification,
