@@ -73,7 +73,7 @@ timestamp = str(int(time.time()))
 
 DATASET = args.dataset
 
-OUTPUT_PATH = Path.home() / "cwcf" / "output" / timestamp
+OUTPUT_PATH = Path.home() / "cwcf" / "output" / '-'.join('hpc', DATASET, timestamp)
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
 hpc_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
