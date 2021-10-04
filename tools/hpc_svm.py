@@ -21,8 +21,8 @@ hpc_stdout = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stdout.log"
 hpc_stderr = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stderr.log"
 hpc_stderr.parent.mkdir(parents=True, exist_ok=True)
 
-sys.stdout = open(str(hpc_stdout), 'w')
-sys.stderr = open(str(hpc_stderr), 'w')
+sys.stdout = open(str(hpc_stdout), "w")
+sys.stderr = open(str(hpc_stderr), "w")
 
 # ----------------
 META_AVG = "avg"
@@ -33,7 +33,8 @@ def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
     param_grid = dict(gamma=gamma_range, C=c_range)
     cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=42)
     grid = GridSearchCV(
-        SVC(cache_size=1024), param_grid=param_grid, cv=cv, n_jobs=20, verbose=51)
+        SVC(cache_size=1024), param_grid=param_grid, cv=cv, n_jobs=20, verbose=51
+    )
     grid.fit(train_x, train_y)
 
     print(
@@ -53,6 +54,7 @@ def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
 
     clf = SVC(C=c_best, gamma=gamma_best, verbose=51)
     return grid, clf
+
 
 # ----------------
 def prep(data):
@@ -85,6 +87,8 @@ VAL_FILE = str(data_path / (DATASET + "-val"))
 TEST_FILE = str(data_path / (DATASET + "-test"))
 META_FILE = str(data_path / (DATASET + "-meta"))
 HPC_FILE = str(data_path / (DATASET + "-hpc"))
+OUTPUT_PATH = Path.home() / "cwcf" / "output"
+OUTPUT_PATH.mkdir(parents=True, exists_ok=True)
 
 print("Using dataset", DATASET)
 # ----------------
@@ -95,8 +99,6 @@ data_test = pd.read_pickle(TEST_FILE)
 meta = pd.read_pickle(META_FILE)
 
 feats = meta.index
-
-# data_train = data_train[:10]
 
 train_x, train_y = prep(data_train)
 val_x, val_y = prep(data_val)
@@ -130,11 +132,12 @@ data_p = pd.DataFrame(
     data=[train_p, val_p, test_p], index=["train", "validation", "test"]
 ).transpose()
 data_p.to_pickle(HPC_FILE)
+data_p.to_pickle(str(OUTPUT_PATH / f"{DATASET}-hpc-{timestamp}"))
 
-with open(HPC_FILE+'-clf', 'wb') as f:
+with open(str(OUTPUT_PATH / f"{DATASET}-hpc-clf-{timestamp}"), "wb") as f:
     pickle.dump(clf, f)
 
-with open(HPC_FILE+'-grid', 'wb') as f:
+with open(str(OUTPUT_PATH / f"{DATASET}-hpc-grid-{timestamp}"), "wb") as f:
     pickle.dump(grid, f)
 
 # Close Log File
