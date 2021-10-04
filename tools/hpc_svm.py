@@ -8,6 +8,9 @@ import pandas as pd
 import numpy as np
 
 import argparse
+from pathlib import Path
+
+data_path = Path.home() / "cwcf" / "data"
 
 # ----------------
 META_AVG = "avg"
@@ -65,11 +68,11 @@ args = parser.parse_args()
 
 DATASET = args.dataset
 
-DATA_FILE = "../../data/" + DATASET + "-train"
-VAL_FILE = "../../data/" + DATASET + "-val"
-TEST_FILE = "../../data/" + DATASET + "-test"
-META_FILE = "../../data/" + DATASET + "-meta"
-HPC_FILE = "../../data/" + DATASET + "-hpc"
+DATA_FILE = str(data_path / (DATASET + "-train"))
+VAL_FILE = str(data_path / (DATASET + "-val"))
+TEST_FILE = str(data_path / (DATASET + "-test"))
+META_FILE = str(data_path / (DATASET + "-meta"))
+HPC_FILE = str(data_path / (DATASET + "-hpc"))
 
 print("Using dataset", DATASET)
 # ----------------
