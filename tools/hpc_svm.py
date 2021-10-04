@@ -18,10 +18,6 @@ hpc_log = Path.home() / "cwcf" / "logs" / f"hpc_svm{random.randint(100,999)}.log
 hpc_log.parent.mkdir(parents=True, exist_ok=True)
 
 sys.stdout = open(str(hpc_log), 'w')
-print('LOG TEST IS WORKING')
-
-# Close Log File
-sys.stdout.close()
 
 # ----------------
 META_AVG = "avg"
@@ -131,3 +127,5 @@ data_p = pd.DataFrame(
 ).transpose()
 data_p.to_pickle(HPC_FILE)
 
+# Close Log File
+sys.stdout.close()
