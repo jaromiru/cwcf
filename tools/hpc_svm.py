@@ -11,14 +11,17 @@ import argparse
 from pathlib import Path
 import sys
 import random
+import time
 
 data_path = Path.home() / "cwcf" / "data"
+timestamp = int(time.time())
 
-hpc_log = Path.home() / "cwcf" / "logs" / f"hpc_svm{random.randint(100,999)}.log"
-hpc_log.parent.mkdir(parents=True, exist_ok=True)
+hpc_stdout = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stdout.log"
+hpc_stderr = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stderr.log"
+hpc_stderr.parent.mkdir(parents=True, exist_ok=True)
 
-sys.stdout = open(str(hpc_log), 'w')
-sys.stderr = open(str(hpc_log), 'w')
+sys.stdout = open(str(hpc_stdout), 'w')
+sys.stderr = open(str(hpc_stderr), 'w')
 
 # ----------------
 META_AVG = "avg"
@@ -29,8 +32,7 @@ def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
     param_grid = dict(gamma=gamma_range, C=c_range)
     cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=42)
     grid = GridSearchCV(
-        SVC(cache_size=1024), param_grid=param_grid, cv=cv, n_jobs=20, verbose=10
-    )
+        SVC(cache_size=1024), param_grid=param_grid, cv=cv, n_jobs=20, verbose=51)
     grid.fit(train_x, train_y)
 
     print(
@@ -48,7 +50,7 @@ def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
     c_best = grid.best_params_["C"]
     gamma_best = grid.best_params_["gamma"]
 
-    clf = SVC(C=c_best, gamma=gamma_best, verbose=True)
+    clf = SVC(C=c_best, gamma=gamma_best, verbose=51)
     return clf
 
 # ----------------
