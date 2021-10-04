@@ -1,14 +1,15 @@
-DATASET = 'mnist'
+DATASET = "mnist"
 
-CLASSES  = 10
+CLASSES = 10
 FEATURES = 784
 
-NN_SIZE    = 512
+NN_SIZE = 512
 DIFFICULTY = 10000
 
-class Override():
+
+class Override:
     def __init__(self):
-        self.POOL_SIZE  = 10000
+        self.POOL_SIZE = 10000
 
         self.PRETRAIN_LR = 2.0e-5
         self.OPT_LR = 1.0e-5

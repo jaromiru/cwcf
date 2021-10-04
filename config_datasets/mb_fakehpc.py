@@ -1,14 +1,15 @@
-DATASET = 'mb'
+DATASET = "mb"
 
-CLASSES  = 2
+CLASSES = 2
 FEATURES = 50
 
-NN_SIZE    = 128
+NN_SIZE = 128
 DIFFICULTY = 1000
 
-class Override():
+
+class Override:
     def __init__(self):
-        self.HPC_FILE = '../data/' + DATASET + '-hpc-fake'
+        self.HPC_FILE = "../data/" + DATASET + "-hpc-fake"
 
 
 override = Override()
