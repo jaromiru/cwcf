@@ -10,32 +10,18 @@ import numpy as np
 import argparse
 from pathlib import Path
 import sys
-
+import random
 
 data_path = Path.home() / "cwcf" / "data"
 
-# Start Log file
-# class Tee(object):
-#     def __init__(self, *files):
-#         self.files = files
-#     def write(self, obj):
-#         for f in self.files:
-#             f.write(obj)
-#             f.flush() # If you want the output to be visible immediately
-#     def flush(self) :
-#         for f in self.files:
-#             f.flush()
-#
-#
-# hpc_log = Path.home() / "cwcf" / "logs" / "hpc_svm.log"
-# hpc_log.parent.mkdir(parents=True, exist_ok=True)
-#
-# f = open(str(hpc_log), 'w')
-# original_stderr = sys.stderr
-# original_stdout = sys.stdout
-#
-# sys.stdout = Tee(sys.stdout, hpc_log)
-# sys.stderr = sys.stdout
+hpc_log = Path.home() / "cwcf" / "logs" / f"hpc_svm{random.randint(100,999)}.log"
+hpc_log.parent.mkdir(parents=True, exist_ok=True)
+
+sys.stdout = open(str(hpc_log), 'w')
+print('LOG TEST IS WORKING')
+
+# Close Log File
+sys.stdout.close()
 
 # ----------------
 META_AVG = "avg"
@@ -145,7 +131,3 @@ data_p = pd.DataFrame(
 ).transpose()
 data_p.to_pickle(HPC_FILE)
 
-# Close Log File
-sys.stdout = original_stdout
-sys.stderr = original_stderr
-hpc_log.close()
