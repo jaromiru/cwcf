@@ -3,8 +3,10 @@ import numpy as np
 
 import utils, json, random, torch, gc, types
 import argparse
-
+import sys
 from config import config
+import time
+from pathlib import Path
 
 # ==============================
 def str2bool(v):
@@ -44,6 +46,22 @@ args = parser.parse_args()
 
 config.init(args)
 config.print_short()
+
+timestamp = str(int(time.time()))
+
+DATASET = args.dataset
+
+OUTPUT_PATH = Path.home() / "cwcf" / "output" / '-'.join(('hpc', DATASET, timestamp))
+OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+
+drl_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
+drl_stderr = str(OUTPUT_PATH / f"{DATASET}-hpc-stderr-{timestamp}.log")
+
+sys.stdout = open(drl_stdout, "w")
+sys.stderr = open(drl_stderr, "w")
+
+print(f"Using dataset: {DATASET}")
+print(f"Output Path: {OUTPUT_PATH}")
 
 # ==============================
 from agent import Agent
@@ -85,8 +103,8 @@ pool = Pool(config.POOL_SIZE)
 env = Environment(data_trn, hpc["train"], costs)
 brain = Brain(pool)
 agent = Agent(env, pool, brain)
-log_val = Log(data_val, hpc["validation"], costs, brain, "val")
-log_trn = Log(data_trn, hpc["train"], costs, brain, "trn")
+log_val = Log(data_val, hpc["validation"], costs, brain, "val", OUTPUT_PATH)
+log_trn = Log(data_trn, hpc["train"], costs, brain, "trn", OUTPUT_PATH)
 
 # ==============================
 epoch_start = 0
@@ -228,11 +246,15 @@ data_tst[feats] = (data_tst[feats] - meta[config.META_AVG]) / meta[
 
 brain._load(file="model_best")
 print("Performance on the best model:")
-log_trn = Log(data_trn, hpc["train"], costs, brain, "trn_best")
+log_trn = Log(data_trn, hpc["train"], costs, brain, "trn_best", OUTPUT_PATH)
 log_trn.log_perf()
 
-log_val = Log(data_val, hpc["validation"], costs, brain, "val_best")
+log_val = Log(data_val, hpc["validation"], costs, brain, "val_best", OUTPUT_PATH)
 log_val.log_perf()
 
-log_tst = Log(data_tst, hpc["test"], costs, brain, "tst_best")
+log_tst = Log(data_tst, hpc["test"], costs, brain, "tst_best", OUTPUT_PATH)
 log_tst.log_perf(histogram=True)
+
+# Close Log File
+sys.stdout.close()
+sys.stderr.close()

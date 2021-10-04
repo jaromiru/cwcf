@@ -5,11 +5,13 @@ from config import config
 
 from agent import PerfAgent
 from env import SeqEnvironment
+from pathlib import Path
+
 
 
 # ==============================
 class Log:
-    def __init__(self, data, hpc_p, costs, brain, log_name=None):
+    def __init__(self, data, hpc_p, costs, brain, log_name, output_path):
         self.data = data
         self.hpc_p = hpc_p
         self.costs = costs
@@ -18,8 +20,20 @@ class Log:
         self.LOG_TRACKED_STATES = np.array(config.LOG_TRACKED_STATES, dtype=np.float32)
         self.LEN = len(self.LOG_TRACKED_STATES)
 
-        self.log_name = log_name
-        self.log_to_file = log_name is not None
+        if log_name is None:
+            raise ValueError('provide log name')
+        else:
+            self.log_name = log_name
+        self.log_to_file = True
+
+        self.OUTPUT_PATH = output_path
+
+        # drl_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
+        # drl_stderr = str(OUTPUT_PATH / f"{DATASET}-hpc-stderr-{timestamp}.log")
+        # sys.stdout = open(drl_stdout, "w")
+        # sys.stderr = open(drl_stderr, "w")
+        # print(f"Using dataset: {DATASET}")
+        # print(f"Output Path: {OUTPUT_PATH}")
 
         if self.log_to_file:
             if config.BLANK_INIT:
@@ -29,9 +43,9 @@ class Log:
 
             self.files = []
             for i in range(self.LEN):
-                self.files.append(open("run_{}_{}.dat".format(log_name, i), mode))
+                self.files.append(open(self.OUTPUT_PATH/f"run_{log_name}_{i}.dat", mode))
 
-            self.perf_file = open("run_{}_perf.dat".format(log_name), mode)
+            self.perf_file = open(self.OUTPUT_PATH/f"run_{log_name}_perf.dat", mode)
 
         self.time = 0
 
@@ -132,11 +146,11 @@ class Log:
             _lens_hpc = np.concatenate(_lens_hpc).flatten()
 
             # print("Writing histogram...")
-            with open("run_{}_histogram.dat".format(self.log_name), "w") as file:
+            with open(self.OUTPUT_PATH/f"run_{self.log_name}_histogram.dat", "w") as file:
                 for x in _lens:
                     file.write("{} ".format(x))
 
-            with open("run_{}_histogram_hpc.dat".format(self.log_name), "w") as file:
+            with open(self.OUTPUT_PATH/f"run_{self.log_name}_histogram_hpc.dat", "w") as file:
                 for x in _lens_hpc:
                     file.write("{} ".format(x))
 

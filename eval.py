@@ -2,6 +2,9 @@ import pandas as pd
 import argparse
 
 from config import config
+import time
+from pathlib import Path
+import sys
 
 # ==============================
 def str2bool(v):
@@ -31,6 +34,23 @@ args.pretrain = False
 
 config.init(args)
 config.print_short()
+
+
+timestamp = str(int(time.time()))
+
+DATASET = args.dataset
+
+OUTPUT_PATH = Path.home() / "cwcf" / "output" / '-'.join(('hpc', DATASET, timestamp))
+OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+
+eval_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
+eval_stderr = str(OUTPUT_PATH / f"{DATASET}-hpc-stderr-{timestamp}.log")
+
+sys.stdout = open(eval_stdout, "w")
+sys.stderr = open(eval_stderr, "w")
+
+print(f"Using dataset: {DATASET}")
+print(f"Output Path: {OUTPUT_PATH}")
 
 # ==============================
 from brain import Brain
@@ -63,11 +83,15 @@ brain = Brain(None)
 brain._load(file="model_best")
 
 print("Performance on the best model:")
-log_trn = Log(data_trn, hpc["train"], costs, brain, "trn_best")
+log_trn = Log(data_trn, hpc["train"], costs, brain, "trn_best", OUTPUT_PATH)
 log_trn.log_perf()
 
-log_val = Log(data_val, hpc["validation"], costs, brain, "val_best")
+log_val = Log(data_val, hpc["validation"], costs, brain, "val_best", OUTPUT_PATH)
 log_val.log_perf()
 
-log_tst = Log(data_tst, hpc["test"], costs, brain, "tst_best")
+log_tst = Log(data_tst, hpc["test"], costs, brain, "tst_best", OUTPUT_PATH)
 log_tst.log_perf(histogram=True)
+
+# Close Log File
+sys.stdout.close()
+sys.stderr.close()
