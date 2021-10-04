@@ -49,7 +49,7 @@ config.print_short()
 from agent import Agent
 from brain import Brain
 from env import Environment
-from tools.log import Log
+from log import Log
 from pool import Pool
 
 # ==============================

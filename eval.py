@@ -34,7 +34,7 @@ config.print_short()
 
 # ==============================
 from brain import Brain
-from tools.log import Log
+from log import Log
 
 # ==============================
 data_trn = pd.read_pickle(config.DATA_FILE)

@@ -4,7 +4,7 @@ from sklearn.svm import *
 # from thundersvm import SVC
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
-from tools.log import Tee
+from log import Tee
 
 import pandas as pd
 import numpy as np
