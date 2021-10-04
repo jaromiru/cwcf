@@ -15,7 +15,7 @@ import random
 import time
 
 data_path = Path.home() / "cwcf" / "data"
-timestamp = int(time.time())
+timestamp = str(int(time.time()))
 
 hpc_stdout = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stdout.log"
 hpc_stderr = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stderr.log"
@@ -90,7 +90,7 @@ TEST_FILE = str(data_path / (DATASET + "-test"))
 META_FILE = str(data_path / (DATASET + "-meta"))
 HPC_FILE = str(data_path / (DATASET + "-hpc"))
 OUTPUT_PATH = Path.home() / "cwcf" / "output"
-OUTPUT_PATH.mkdir(parents=True, exists_ok=True)
+OUTPUT_PATH / timestamp.mkdir(parents=True, exists_ok=True)
 
 print("Using dataset", DATASET)
 # ----------------
@@ -134,12 +134,12 @@ data_p = pd.DataFrame(
     data=[train_p, val_p, test_p], index=["train", "validation", "test"]
 ).transpose()
 data_p.to_pickle(HPC_FILE)
-data_p.to_pickle(str(OUTPUT_PATH / f"{DATASET}-hpc-{timestamp}"))
+data_p.to_pickle(str(OUTPUT_PATH / timestamp / f"{DATASET}-hpc-{timestamp}"))
 
-with open(str(OUTPUT_PATH / f"{DATASET}-hpc-clf-{timestamp}"), "wb") as f:
+with open(str(OUTPUT_PATH / timestamp / f"{DATASET}-hpc-clf-{timestamp}"), "wb") as f:
     pickle.dump(clf, f)
 
-with open(str(OUTPUT_PATH / f"{DATASET}-hpc-grid-{timestamp}"), "wb") as f:
+with open(str(OUTPUT_PATH / timestamp / f"{DATASET}-hpc-grid-{timestamp}"), "wb") as f:
     pickle.dump(grid, f)
 
 # Close Log File
