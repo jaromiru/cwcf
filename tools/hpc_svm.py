@@ -28,7 +28,7 @@ data_path = Path.home() / "cwcf" / "data"
 
 # Start Log file
 hpc_log = Path.home() / "cwcf" / "logs" / "hpc_svm.log"
-hpc_log.parent.mkdir(parents=True)
+hpc_log.parent.mkdir(parents=True, exist_ok=True)
 
 f = open(str(hpc_log), 'w')
 original_stderr = sys.stderr
