@@ -6,6 +6,8 @@ from config import config
 from agent import PerfAgent
 from env import SeqEnvironment
 import sys
+from pathlib import Path
+sys.path.append(str(Path.home()/"cwcf"))
 
 class Tee(object):
     def __init__(self, *files):
