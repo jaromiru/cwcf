@@ -21,11 +21,11 @@ class Config:
         self.FEATURE_FACTOR = args.flambda
 
         # ================== DATASET
-        self.DATA_FILE = data_path / dataset.DATASET + "-train"
-        self.DATA_VAL_FILE = data_path / dataset.DATASET + "-val"
-        self.DATA_TEST_FILE = data_path / dataset.DATASET + "-test"
-        self.META_FILE = data_path / dataset.DATASET + "-meta"
-        self.HPC_FILE = data_path / dataset.DATASET + "-hpc"
+        self.DATA_FILE = data_path / (dataset.DATASET + "-train")
+        self.DATA_VAL_FILE = data_path / (dataset.DATASET + "-val")
+        self.DATA_TEST_FILE = data_path / (dataset.DATASET + "-test")
+        self.META_FILE = data_path / (dataset.DATASET + "-meta")
+        self.HPC_FILE = data_path / (dataset.DATASET + "-hpc")
 
         self.CLASSES = dataset.CLASSES
         self.FEATURE_DIM = dataset.FEATURES
