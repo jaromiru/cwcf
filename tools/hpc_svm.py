@@ -22,7 +22,7 @@ def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
     param_grid = dict(gamma=gamma_range, C=c_range)
     cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=42)
     grid = GridSearchCV(
-        SVC(cache_size=1024), param_grid=param_grid, cv=cv, n_jobs=14, verbose=10
+        SVC(cache_size=1024), param_grid=param_grid, cv=cv, n_jobs=8, verbose=10
     )
     grid.fit(train_x, train_y)
 
