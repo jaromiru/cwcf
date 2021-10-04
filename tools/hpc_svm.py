@@ -1,10 +1,8 @@
 """ Computes probabilities for HPC model """
 
 from sklearn.svm import *
-# from thundersvm import SVC
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
-from log import Tee
 
 import pandas as pd
 import numpy as np
@@ -12,6 +10,19 @@ import numpy as np
 import argparse
 from pathlib import Path
 import sys
+
+
+class Tee(object):
+    def __init__(self, *files):
+        self.files = files
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush() # If you want the output to be visible immediately
+    def flush(self) :
+        for f in self.files:
+            f.flush()
+
 
 data_path = Path.home() / "cwcf" / "data"
 
