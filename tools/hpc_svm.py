@@ -12,30 +12,30 @@ from pathlib import Path
 import sys
 
 
-class Tee(object):
-    def __init__(self, *files):
-        self.files = files
-    def write(self, obj):
-        for f in self.files:
-            f.write(obj)
-            f.flush() # If you want the output to be visible immediately
-    def flush(self) :
-        for f in self.files:
-            f.flush()
-
-
 data_path = Path.home() / "cwcf" / "data"
 
 # Start Log file
-hpc_log = Path.home() / "cwcf" / "logs" / "hpc_svm.log"
-hpc_log.parent.mkdir(parents=True, exist_ok=True)
-
-f = open(str(hpc_log), 'w')
-original_stderr = sys.stderr
-original_stdout = sys.stdout
-
-sys.stdout = Tee(sys.stdout, hpc_log)
-sys.stderr = sys.stdout
+# class Tee(object):
+#     def __init__(self, *files):
+#         self.files = files
+#     def write(self, obj):
+#         for f in self.files:
+#             f.write(obj)
+#             f.flush() # If you want the output to be visible immediately
+#     def flush(self) :
+#         for f in self.files:
+#             f.flush()
+#
+#
+# hpc_log = Path.home() / "cwcf" / "logs" / "hpc_svm.log"
+# hpc_log.parent.mkdir(parents=True, exist_ok=True)
+#
+# f = open(str(hpc_log), 'w')
+# original_stderr = sys.stderr
+# original_stdout = sys.stdout
+#
+# sys.stdout = Tee(sys.stdout, hpc_log)
+# sys.stderr = sys.stdout
 
 # ----------------
 META_AVG = "avg"
