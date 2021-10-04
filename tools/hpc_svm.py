@@ -13,16 +13,6 @@ from pathlib import Path
 import sys
 import time
 
-data_path = Path.home() / "cwcf" / "data"
-timestamp = str(int(time.time()))
-
-hpc_stdout = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stdout.log"
-hpc_stderr = Path.home() / "cwcf" / "logs" / f"hpc_svm{timestamp}_stderr.log"
-hpc_stderr.parent.mkdir(parents=True, exist_ok=True)
-
-sys.stdout = open(str(hpc_stdout), "w")
-sys.stderr = open(str(hpc_stderr), "w")
-
 # ----------------
 
 META_AVG = "avg"
@@ -72,7 +62,6 @@ def prep(data):
 
 
 # ----------------
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-dataset", required=True, help="dataset name")
 parser.add_argument("-svmgamma", type=float, help="SVM gamma parameter")
@@ -80,18 +69,32 @@ parser.add_argument("-svmc", type=float, help="SVM C parameter")
 
 args = parser.parse_args()
 
+timestamp = str(int(time.time()))
 
 DATASET = args.dataset
 
-DATA_FILE = str(data_path / (DATASET + "-train"))
-VAL_FILE = str(data_path / (DATASET + "-val"))
-TEST_FILE = str(data_path / (DATASET + "-test"))
-META_FILE = str(data_path / (DATASET + "-meta"))
-HPC_FILE = str(data_path / (DATASET + "-hpc"))
-OUTPUT_PATH = Path.home() / "cwcf" / "output"
-OUTPUT_PATH.mkdir(parents=True, exists_ok=True)
+OUTPUT_PATH = Path.home() / "cwcf" / "output" / timestamp
+OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
-print("Using dataset", DATASET)
+hpc_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
+hpc_stderr = str(OUTPUT_PATH / f"{DATASET}-hpc-stderr-{timestamp}.log")
+
+sys.stdout = open(hpc_stdout, "w")
+sys.stderr = open(hpc_stderr, "w")
+
+print(f"Using dataset: {DATASET}")
+print(f"Output Path: {OUTPUT_PATH}")
+
+DATA_PATH = Path.home() / "cwcf" / "data"
+
+print(f"Data Path: {DATA_PATH}")
+
+DATA_FILE = str(DATA_PATH / (DATASET + "-train"))
+VAL_FILE = str(DATA_PATH / (DATASET + "-val"))
+TEST_FILE = str(DATA_PATH / (DATASET + "-test"))
+META_FILE = str(DATA_PATH / (DATASET + "-meta"))
+HPC_FILE = str(DATA_PATH / (DATASET + "-hpc"))
+
 # ----------------
 
 data_train = pd.read_pickle(DATA_FILE)
@@ -108,7 +111,7 @@ test_x, test_y = prep(data_test)
 if args.svmgamma is not None and args.svmc is not None:
     grid, clf = SVC(C=args.svmc, gamma=args.svmgamma, cache_size=4096)
 else:
-    print("Searching for hyperparameters...")
+    print("Searching for Hyper-Parameters...")
     c_range = np.logspace(-3, 3, 5)
     gamma_range = np.logspace(-5, 1, 5)
     grid, clf = get_full_rbf_svm_clf(
@@ -133,12 +136,12 @@ data_p = pd.DataFrame(
     data=[train_p, val_p, test_p], index=["train", "validation", "test"]
 ).transpose()
 data_p.to_pickle(HPC_FILE)
-data_p.to_pickle(str(OUTPUT_PATH / timestamp / f"{DATASET}-hpc-{timestamp}"))
+data_p.to_pickle(str(OUTPUT_PATH / f"{DATASET}-hpc-{timestamp}"))
 
-with open(str(OUTPUT_PATH / timestamp / f"{DATASET}-hpc-clf-{timestamp}"), "wb") as f:
+with open(str(OUTPUT_PATH / f"{DATASET}-hpc-clf-{timestamp}"), "wb") as f:
     pickle.dump(clf, f)
 
-with open(str(OUTPUT_PATH / timestamp / f"{DATASET}-hpc-grid-{timestamp}"), "wb") as f:
+with open(str(OUTPUT_PATH / f"{DATASET}-hpc-grid-{timestamp}"), "wb") as f:
     pickle.dump(grid, f)
 
 # Close Log File
