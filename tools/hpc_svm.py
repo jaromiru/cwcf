@@ -11,7 +11,6 @@ import numpy as np
 import argparse
 from pathlib import Path
 import sys
-import random
 import time
 
 data_path = Path.home() / "cwcf" / "data"
@@ -90,7 +89,7 @@ TEST_FILE = str(data_path / (DATASET + "-test"))
 META_FILE = str(data_path / (DATASET + "-meta"))
 HPC_FILE = str(data_path / (DATASET + "-hpc"))
 OUTPUT_PATH = Path.home() / "cwcf" / "output"
-OUTPUT_PATH / timestamp.mkdir(parents=True, exists_ok=True)
+OUTPUT_PATH.mkdir(parents=True, exists_ok=True)
 
 print("Using dataset", DATASET)
 # ----------------
