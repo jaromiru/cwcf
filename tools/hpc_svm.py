@@ -18,6 +18,7 @@ hpc_log = Path.home() / "cwcf" / "logs" / f"hpc_svm{random.randint(100,999)}.log
 hpc_log.parent.mkdir(parents=True, exist_ok=True)
 
 sys.stdout = open(str(hpc_log), 'w')
+sys.stderr = open(str(hpc_log), 'w')
 
 # ----------------
 META_AVG = "avg"
@@ -129,3 +130,4 @@ data_p.to_pickle(HPC_FILE)
 
 # Close Log File
 sys.stdout.close()
+sys.stderr.close()
