@@ -1,17 +1,30 @@
 """ Computes probabilities for HPC model """
 
-# from sklearn.svm import *
-from thundersvm import SVC
+from sklearn.svm import *
+# from thundersvm import SVC
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
+from log import Tee
 
 import pandas as pd
 import numpy as np
 
 import argparse
 from pathlib import Path
+import sys
 
 data_path = Path.home() / "cwcf" / "data"
+
+# Start Log file
+hpc_log = Path.home() / "cwcf" / "logs" / "hpc_svm.log"
+hpc_log.parent.mkdir(parents=True)
+
+f = open(str(hpc_log), 'w')
+original_stderr = sys.stderr
+original_stdout = sys.stdout
+
+sys.stdout = Tee(sys.stdout, hpc_log)
+sys.stderr = sys.stdout
 
 # ----------------
 META_AVG = "avg"
@@ -60,12 +73,14 @@ def prep(data):
 
 
 # ----------------
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-dataset", required=True, help="dataset name")
 parser.add_argument("-svmgamma", type=float, help="SVM gamma parameter")
 parser.add_argument("-svmc", type=float, help="SVM C parameter")
 
 args = parser.parse_args()
+
 
 DATASET = args.dataset
 
@@ -119,3 +134,8 @@ data_p = pd.DataFrame(
     data=[train_p, val_p, test_p], index=["train", "validation", "test"]
 ).transpose()
 data_p.to_pickle(HPC_FILE)
+
+# Close Log File
+sys.stdout = original_stdout
+sys.stderr = original_stderr
+hpc_log.close()
