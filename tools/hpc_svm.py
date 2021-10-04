@@ -1,4 +1,5 @@
 """ Computes probabilities for HPC model """
+import pickle
 
 from sklearn.svm import *
 from sklearn.model_selection import GridSearchCV
@@ -51,7 +52,7 @@ def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
     gamma_best = grid.best_params_["gamma"]
 
     clf = SVC(C=c_best, gamma=gamma_best, verbose=51)
-    return clf
+    return grid, clf
 
 # ----------------
 def prep(data):
@@ -102,33 +103,39 @@ val_x, val_y = prep(data_val)
 test_x, test_y = prep(data_test)
 
 if args.svmgamma is not None and args.svmc is not None:
-    model = SVC(C=args.svmc, gamma=args.svmgamma, cache_size=4096)
+    grid, clf = SVC(C=args.svmc, gamma=args.svmgamma, cache_size=4096)
 else:
     print("Searching for hyperparameters...")
     c_range = np.logspace(-3, 3, 5)
     gamma_range = np.logspace(-5, 1, 5)
-    model = get_full_rbf_svm_clf(
+    grid, clf = get_full_rbf_svm_clf(
         train_x, train_y, c_range=c_range, gamma_range=gamma_range
     )
 
 print("Training...")
-model.fit(train_x, train_y)
+clf.fit(train_x, train_y)
 
 # ----------------
-print("Trn score:  {:.4f}".format(model.score(train_x, train_y)))
-print("Val score:  {:.4f}".format(model.score(val_x, val_y)))
-print("Tst score:  {:.4f}".format(model.score(test_x, test_y)))
+print("Trn score:  {:.4f}".format(clf.score(train_x, train_y)))
+print("Val score:  {:.4f}".format(clf.score(val_x, val_y)))
+print("Tst score:  {:.4f}".format(clf.score(test_x, test_y)))
 
 # ----------------
 print("\nSaving...")
-train_p = model.predict(train_x)
-val_p = model.predict(val_x)
-test_p = model.predict(test_x)
+train_p = clf.predict(train_x)
+val_p = clf.predict(val_x)
+test_p = clf.predict(test_x)
 
 data_p = pd.DataFrame(
     data=[train_p, val_p, test_p], index=["train", "validation", "test"]
 ).transpose()
 data_p.to_pickle(HPC_FILE)
+
+with open(HPC_FILE+'-clf', 'wb') as f:
+    pickle.dump(clf, f)
+
+with open(HPC_FILE+'-grid', 'wb') as f:
+    pickle.dump(grid, f)
 
 # Close Log File
 sys.stdout.close()
