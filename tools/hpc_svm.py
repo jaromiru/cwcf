@@ -1,6 +1,7 @@
 """ Computes probabilities for HPC model """
 
-from sklearn.svm import *
+# from sklearn.svm import *
+from thundersvm import SVC
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
 
