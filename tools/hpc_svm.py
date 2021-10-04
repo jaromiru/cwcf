@@ -25,10 +25,12 @@ sys.stdout = open(str(hpc_stdout), "w")
 sys.stderr = open(str(hpc_stderr), "w")
 
 # ----------------
+
 META_AVG = "avg"
 META_STD = "std"
 
 # ----------------
+
 def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
     param_grid = dict(gamma=gamma_range, C=c_range)
     cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=42)
