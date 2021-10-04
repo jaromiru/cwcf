@@ -94,8 +94,8 @@ if args.svmgamma is not None and args.svmc is not None:
     model = SVC(C=args.svmc, gamma=args.svmgamma, cache_size=4096)
 else:
     print("Searching for hyperparameters...")
-    c_range = np.logspace(-3, 3, 7)
-    gamma_range = np.logspace(-5, 1, 7)
+    c_range = np.logspace(-3, 3, 5)
+    gamma_range = np.logspace(-5, 1, 5)
     model = get_full_rbf_svm_clf(
         train_x, train_y, c_range=c_range, gamma_range=gamma_range
     )
