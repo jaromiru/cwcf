@@ -129,7 +129,7 @@ avg_r.val_fails = 0
 
 if not config.BLANK_INIT:
     print("Loading progress..")
-    brain._load()
+    brain._load(filepath=OUTPUT_PATH)
 
     with open(str(OUTPUT_PATH / "run.state"), "r") as file:
         save_data = json.load(file)
@@ -143,7 +143,7 @@ if config.PRETRAIN and config.BLANK_INIT:
     print("Pretraining..")
     brain.pretrain(env)
     brain._save(file="model_pretrained", filepath=OUTPUT_PATH)
-# brain._load(file="model_pretrained")
+# brain._load(file="model_pretrained", filepath=OUTPUT_PATH)
 
 # ==============================
 agent.update_epsilon(epoch_start)
@@ -250,7 +250,7 @@ data_tst[feats] = (data_tst[feats] - meta[config.META_AVG]) / meta[
     config.META_STD
 ]  # normalize
 
-brain._load(file="model_best")
+brain._load(file="model_best", filepath=OUTPUT_PATH)
 print("Performance on the best model:")
 log_trn = Log(data_trn, hpc["train"], costs, brain, OUTPUT_PATH, "trn_best")
 log_trn.log_perf()

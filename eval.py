@@ -80,7 +80,7 @@ data_tst[feats] = (data_tst[feats] - meta[config.META_AVG]) / meta[
 print("Evaluating dataset:", args.dataset)
 
 brain = Brain(None)
-brain._load(file="model_best")
+brain._load(file="model_best", filepath=OUTPUT_PATH)
 
 print("Performance on the best model:")
 log_trn = Log(data_trn, hpc["train"], costs, brain, OUTPUT_PATH, "trn_best")
