@@ -51,11 +51,11 @@ timestamp = str(int(time.time()))
 
 DATASET = args.dataset
 
-OUTPUT_PATH = Path.home() / "cwcf" / "output" / '-'.join(('hpc', DATASET, timestamp))
+OUTPUT_PATH = Path.home() / "cwcf" / "output" / str(DATASET) / str(args.flambda) / '-'.join(('drl', DATASET, str(args.flambda), timestamp))
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
-drl_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
-drl_stderr = str(OUTPUT_PATH / f"{DATASET}-hpc-stderr-{timestamp}.log")
+drl_stdout = str(OUTPUT_PATH / f"{DATASET}-drl-stdout-{timestamp}.log")
+drl_stderr = str(OUTPUT_PATH / f"{DATASET}-drl-stderr-{timestamp}.log")
 
 sys.stdout = open(drl_stdout, "w")
 sys.stderr = open(drl_stderr, "w")
@@ -158,12 +158,10 @@ for epoch in range(epoch_start, config.MAX_TRAINING_EPOCHS + 1):
     # save progress
     if utils.is_time(epoch, config.SAVE_EPOCHS):
         brain._save()
-
         save_data = {}
         save_data["epoch"] = epoch
         save_data["lr"] = brain.lr
         save_data["avg_r"] = avg_r.__dict__
-
         with open("run.state", "w") as file:
             json.dump(save_data, file)
 

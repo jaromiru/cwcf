@@ -100,7 +100,7 @@ class Config:
         self.PRETRAIN_LR_FACTOR = 0.1
 
         # ================== AUX
-        self.SAVE_EPOCHS = 0.1 * dataset.DIFFICULTY
+        self.SAVE_EPOCHS = 0.05 * dataset.DIFFICULTY
         self.MAX_MASK_CONST = 1.0e6
 
         if hasattr(dataset, "override"):

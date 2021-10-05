@@ -20,12 +20,12 @@ class Brain:
         print("Network architecture:\n" + str(self.model))
 
     def _load(self, file="model"):
-        self.model.load_state_dict(torch.load(file))
-        self.model_.load_state_dict(torch.load(file + "_"))
+        self.model.load_state_dict(torch.load(file + ".pt"))
+        self.model_.load_state_dict(torch.load(file + "_.pt"))
 
     def _save(self, file="model"):
-        torch.save(self.model.state_dict(), file)
-        torch.save(self.model_.state_dict(), file + "_")
+        torch.save(self.model.state_dict(), file + ".pt")
+        torch.save(self.model_.state_dict(), file + "_.pt")
 
     def predict_pt(self, s, target):
         if target:
