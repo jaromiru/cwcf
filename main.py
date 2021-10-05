@@ -3,7 +3,7 @@ import numpy as np
 
 import utils, json, random, torch, gc, types
 import argparse
-import sys
+# import sys
 from config import config
 import time
 from pathlib import Path
@@ -57,8 +57,8 @@ OUTPUT_PATH = (
     / "output"
     / "drl"
     / str(DATASET)
-    / 'flambda'+str(args.flambda)
-    / "-".join(("drl", DATASET, str(args.flambda), timestamp))
+    / ("flambda"+str(args.flambda))
+    / "-".join(["drl", DATASET, str(args.flambda), timestamp])
 )
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
