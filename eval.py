@@ -43,8 +43,8 @@ DATASET = args.dataset
 OUTPUT_PATH = Path.home() / "cwcf" / "output" / "-".join(("hpc", DATASET, timestamp))
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
-eval_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
-eval_stderr = str(OUTPUT_PATH / f"{DATASET}-hpc-stderr-{timestamp}.log")
+eval_stdout = str(OUTPUT_PATH / f"{DATASET}-eval-stdout-{timestamp}.log")
+eval_stderr = str(OUTPUT_PATH / f"{DATASET}-eval-stderr-{timestamp}.log")
 
 sys.stdout = open(eval_stdout, "w")
 sys.stderr = open(eval_stderr, "w")
@@ -83,13 +83,13 @@ brain = Brain(None)
 brain._load(file="model_best")
 
 print("Performance on the best model:")
-log_trn = Log(data_trn, hpc["train"], costs, brain, "trn_best", OUTPUT_PATH)
+log_trn = Log(data_trn, hpc["train"], costs, brain, OUTPUT_PATH, "trn_best")
 log_trn.log_perf()
 
-log_val = Log(data_val, hpc["validation"], costs, brain, "val_best", OUTPUT_PATH)
+log_val = Log(data_val, hpc["validation"], costs, brain, OUTPUT_PATH, "val_best")
 log_val.log_perf()
 
-log_tst = Log(data_tst, hpc["test"], costs, brain, "tst_best", OUTPUT_PATH)
+log_tst = Log(data_tst, hpc["test"], costs, brain, OUTPUT_PATH, "tst_best")
 log_tst.log_perf(histogram=True)
 
 # Close Log File

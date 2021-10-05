@@ -110,8 +110,8 @@ pool = Pool(config.POOL_SIZE)
 env = Environment(data_trn, hpc["train"], costs)
 brain = Brain(pool)
 agent = Agent(env, pool, brain)
-log_val = Log(data_val, hpc["validation"], costs, brain, "val", OUTPUT_PATH)
-log_trn = Log(data_trn, hpc["train"], costs, brain, "trn", OUTPUT_PATH)
+log_val = Log(data_val, hpc["validation"], costs, brain, OUTPUT_PATH, "val")
+log_trn = Log(data_trn, hpc["train"], costs, brain, OUTPUT_PATH, "trn")
 
 # ==============================
 epoch_start = 0
@@ -251,13 +251,13 @@ data_tst[feats] = (data_tst[feats] - meta[config.META_AVG]) / meta[
 
 brain._load(file="model_best")
 print("Performance on the best model:")
-log_trn = Log(data_trn, hpc["train"], costs, brain, "trn_best", OUTPUT_PATH)
+log_trn = Log(data_trn, hpc["train"], costs, brain, OUTPUT_PATH, "trn_best")
 log_trn.log_perf()
 
-log_val = Log(data_val, hpc["validation"], costs, brain, "val_best", OUTPUT_PATH)
+log_val = Log(data_val, hpc["validation"], costs, brain, OUTPUT_PATH, "val_best")
 log_val.log_perf()
 
-log_tst = Log(data_tst, hpc["test"], costs, brain, "tst_best", OUTPUT_PATH)
+log_tst = Log(data_tst, hpc["test"], costs, brain, OUTPUT_PATH, "tst_best")
 log_tst.log_perf(histogram=True)
 
 # Close Log File

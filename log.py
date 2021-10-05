@@ -10,7 +10,7 @@ from pathlib import Path
 
 # ==============================
 class Log:
-    def __init__(self, data, hpc_p, costs, brain, log_name, output_path):
+    def __init__(self, data, hpc_p, costs, brain, output_path, log_name="log"):
         self.data = data
         self.hpc_p = hpc_p
         self.costs = costs
@@ -19,13 +19,10 @@ class Log:
         self.LOG_TRACKED_STATES = np.array(config.LOG_TRACKED_STATES, dtype=np.float32)
         self.LEN = len(self.LOG_TRACKED_STATES)
 
-        if log_name is None:
-            raise ValueError("provide log name")
-        else:
-            self.log_name = log_name
+        self.log_name = log_name
         self.log_to_file = True
 
-        self.OUTPUT_PATH = output_path
+        self.output_path = output_path
 
         # drl_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")
         # drl_stderr = str(OUTPUT_PATH / f"{DATASET}-hpc-stderr-{timestamp}.log")
@@ -43,10 +40,12 @@ class Log:
             self.files = []
             for i in range(self.LEN):
                 self.files.append(
-                    open(self.OUTPUT_PATH / f"run_{log_name}_{i}.dat", mode)
+                    open(str(self.output_path / f"run_{log_name}_{i}.dat"), mode)
                 )
 
-            self.perf_file = open(self.OUTPUT_PATH / f"run_{log_name}_perf.dat", mode)
+            self.perf_file = open(
+                str(self.output_path / f"run_{log_name}_perf.dat"), mode
+            )
 
         self.time = 0
 
@@ -148,13 +147,13 @@ class Log:
 
             # print("Writing histogram...")
             with open(
-                self.OUTPUT_PATH / f"run_{self.log_name}_histogram.dat", "w"
+                str(self.output_path / f"run_{self.log_name}_histogram.dat"), "w"
             ) as file:
                 for x in _lens:
                     file.write("{} ".format(x))
 
             with open(
-                self.OUTPUT_PATH / f"run_{self.log_name}_histogram_hpc.dat", "w"
+                str(self.output_path / f"run_{self.log_name}_histogram_hpc.dat"), "w"
             ) as file:
                 for x in _lens_hpc:
                     file.write("{} ".format(x))
