@@ -55,6 +55,7 @@ OUTPUT_PATH = (
     Path.home()
     / "cwcf"
     / "output"
+    / "drl"
     / str(DATASET)
     / 'flambda'+str(args.flambda)
     / "-".join(("drl", DATASET, str(args.flambda), timestamp))
