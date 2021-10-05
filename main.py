@@ -56,16 +56,16 @@ OUTPUT_PATH = (
     / "cwcf"
     / "output"
     / str(DATASET)
-    / str(args.flambda)
+    / 'flambda'+str(args.flambda)
     / "-".join(("drl", DATASET, str(args.flambda), timestamp))
 )
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
-drl_stdout = str(OUTPUT_PATH / f"{DATASET}-drl-stdout-{timestamp}.log")
-drl_stderr = str(OUTPUT_PATH / f"{DATASET}-drl-stderr-{timestamp}.log")
-
-sys.stdout = open(drl_stdout, "w")
-sys.stderr = open(drl_stderr, "w")
+# drl_stdout = str(OUTPUT_PATH / f"{DATASET}-drl-stdout-{timestamp}.log")
+# drl_stderr = str(OUTPUT_PATH / f"{DATASET}-drl-stderr-{timestamp}.log")
+#
+# sys.stdout = open(drl_stdout, "w")
+# sys.stderr = open(drl_stderr, "w")
 
 print(f"Using dataset: {DATASET}")
 print(f"Output Path: {OUTPUT_PATH}")
@@ -130,7 +130,7 @@ if not config.BLANK_INIT:
     print("Loading progress..")
     brain._load()
 
-    with open("run.state", "r") as file:
+    with open(str(OUTPUT_PATH / "run.state"), "r") as file:
         save_data = json.load(file)
 
     epoch_start = save_data["epoch"]
@@ -141,7 +141,7 @@ if not config.BLANK_INIT:
 if config.PRETRAIN and config.BLANK_INIT:
     print("Pretraining..")
     brain.pretrain(env)
-    brain._save(file="model_pretrained")
+    brain._save(file="model_pretrained", filepath=OUTPUT_PATH)
 # brain._load(file="model_pretrained")
 
 # ==============================
@@ -164,12 +164,12 @@ print("\nStarting..")
 for epoch in range(epoch_start, config.MAX_TRAINING_EPOCHS + 1):
     # save progress
     if utils.is_time(epoch, config.SAVE_EPOCHS):
-        brain._save()
+        brain._save(filepath=OUTPUT_PATH)
         save_data = {}
         save_data["epoch"] = epoch
         save_data["lr"] = brain.lr
         save_data["avg_r"] = avg_r.__dict__
-        with open("run.state", "w") as file:
+        with open(str(OUTPUT_PATH/"run.state"), "w") as file:
             json.dump(save_data, file)
 
     # update exploration
@@ -225,7 +225,7 @@ for epoch in range(epoch_start, config.MAX_TRAINING_EPOCHS + 1):
         if val_avg_last > avg_r.val_best:
             avg_r.val_fails = 0
             avg_r.val_best = val_avg_last
-            brain._save(file="model_best")
+            brain._save(file="model_best", filepath=OUTPUT_PATH)
         else:
             avg_r.val_fails += 1
             print(
@@ -260,6 +260,6 @@ log_val.log_perf()
 log_tst = Log(data_tst, hpc["test"], costs, brain, OUTPUT_PATH, "tst_best")
 log_tst.log_perf(histogram=True)
 
-# Close Log File
-sys.stdout.close()
-sys.stderr.close()
+# # Close Log File
+# sys.stdout.close()
+# sys.stderr.close()

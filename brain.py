@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from config import config
-
+from pathlib import Path
 from net import Net
 import utils
 
@@ -23,9 +23,9 @@ class Brain:
         self.model.load_state_dict(torch.load(file + ".pt"))
         self.model_.load_state_dict(torch.load(file + "_.pt"))
 
-    def _save(self, file="model"):
-        torch.save(self.model.state_dict(), file + ".pt")
-        torch.save(self.model_.state_dict(), file + "_.pt")
+    def _save(self, file="model", filepath=Path.home()/"cwcf"/"outputs"):
+        torch.save(self.model.state_dict(), filepath / file + ".pt")
+        torch.save(self.model_.state_dict(), filepath / file + "_.pt")
 
     def predict_pt(self, s, target):
         if target:
