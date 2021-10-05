@@ -24,8 +24,8 @@ class Brain:
         self.model_.load_state_dict(torch.load(file + "_.pt"))
 
     def _save(self, file="model", filepath=Path.home()/"cwcf"/"outputs"):
-        torch.save(self.model.state_dict(), filepath / file + ".pt")
-        torch.save(self.model_.state_dict(), filepath / file + "_.pt")
+        torch.save(self.model.state_dict(), filepath / (file + ".pt"))
+        torch.save(self.model_.state_dict(), filepath / (file + "_.pt"))
 
     def predict_pt(self, s, target):
         if target:
