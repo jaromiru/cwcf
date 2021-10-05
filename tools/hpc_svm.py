@@ -20,6 +20,7 @@ META_STD = "std"
 
 # ----------------
 
+
 def get_full_rbf_svm_clf(train_x, train_y, c_range=None, gamma_range=None):
     param_grid = dict(gamma=gamma_range, C=c_range)
     cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=42)
@@ -73,7 +74,7 @@ timestamp = str(int(time.time()))
 
 DATASET = args.dataset
 
-OUTPUT_PATH = Path.home() / "cwcf" / "output" / '-'.join(('hpc', DATASET, timestamp))
+OUTPUT_PATH = Path.home() / "cwcf" / "output" / "-".join(("hpc", DATASET, timestamp))
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
 hpc_stdout = str(OUTPUT_PATH / f"{DATASET}-hpc-stdout-{timestamp}.log")

@@ -8,7 +8,6 @@ from env import SeqEnvironment
 from pathlib import Path
 
 
-
 # ==============================
 class Log:
     def __init__(self, data, hpc_p, costs, brain, log_name, output_path):
@@ -21,7 +20,7 @@ class Log:
         self.LEN = len(self.LOG_TRACKED_STATES)
 
         if log_name is None:
-            raise ValueError('provide log name')
+            raise ValueError("provide log name")
         else:
             self.log_name = log_name
         self.log_to_file = True
@@ -43,9 +42,11 @@ class Log:
 
             self.files = []
             for i in range(self.LEN):
-                self.files.append(open(self.OUTPUT_PATH/f"run_{log_name}_{i}.dat", mode))
+                self.files.append(
+                    open(self.OUTPUT_PATH / f"run_{log_name}_{i}.dat", mode)
+                )
 
-            self.perf_file = open(self.OUTPUT_PATH/f"run_{log_name}_perf.dat", mode)
+            self.perf_file = open(self.OUTPUT_PATH / f"run_{log_name}_perf.dat", mode)
 
         self.time = 0
 
@@ -146,11 +147,15 @@ class Log:
             _lens_hpc = np.concatenate(_lens_hpc).flatten()
 
             # print("Writing histogram...")
-            with open(self.OUTPUT_PATH/f"run_{self.log_name}_histogram.dat", "w") as file:
+            with open(
+                self.OUTPUT_PATH / f"run_{self.log_name}_histogram.dat", "w"
+            ) as file:
                 for x in _lens:
                     file.write("{} ".format(x))
 
-            with open(self.OUTPUT_PATH/f"run_{self.log_name}_histogram_hpc.dat", "w") as file:
+            with open(
+                self.OUTPUT_PATH / f"run_{self.log_name}_histogram_hpc.dat", "w"
+            ) as file:
                 for x in _lens_hpc:
                     file.write("{} ".format(x))
 

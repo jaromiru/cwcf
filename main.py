@@ -51,7 +51,14 @@ timestamp = str(int(time.time()))
 
 DATASET = args.dataset
 
-OUTPUT_PATH = Path.home() / "cwcf" / "output" / str(DATASET) / str(args.flambda) / '-'.join(('drl', DATASET, str(args.flambda), timestamp))
+OUTPUT_PATH = (
+    Path.home()
+    / "cwcf"
+    / "output"
+    / str(DATASET)
+    / str(args.flambda)
+    / "-".join(("drl", DATASET, str(args.flambda), timestamp))
+)
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
 drl_stdout = str(OUTPUT_PATH / f"{DATASET}-drl-stdout-{timestamp}.log")
