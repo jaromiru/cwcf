@@ -19,11 +19,11 @@ class Brain:
 
         print("Network architecture:\n" + str(self.model))
 
-    def _load(self, file="model"):
-        self.model.load_state_dict(torch.load(file + ".pt"))
-        self.model_.load_state_dict(torch.load(file + "_.pt"))
+    def _load(self, file="model", filepath=Path.home() / "cwcf" / "outputs"):
+        self.model.load_state_dict(torch.load(filepath / (file + ".pt")))
+        self.model_.load_state_dict(torch.load(filepath / (file + "_.pt")))
 
-    def _save(self, file="model", filepath=Path.home()/"cwcf"/"outputs"):
+    def _save(self, file="model", filepath=Path.home() / "cwcf" / "outputs"):
         torch.save(self.model.state_dict(), filepath / (file + ".pt"))
         torch.save(self.model_.state_dict(), filepath / (file + "_.pt"))
 

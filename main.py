@@ -3,6 +3,7 @@ import numpy as np
 
 import utils, json, random, torch, gc, types
 import argparse
+
 # import sys
 from config import config
 import time
@@ -57,7 +58,7 @@ OUTPUT_PATH = (
     / "output"
     / "drl"
     / str(DATASET)
-    / ("flambda"+str(args.flambda))
+    / ("La" + str(args.flambda))
     / "-".join(["drl", DATASET, str(args.flambda), timestamp])
 )
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
@@ -170,7 +171,7 @@ for epoch in range(epoch_start, config.MAX_TRAINING_EPOCHS + 1):
         save_data["epoch"] = epoch
         save_data["lr"] = brain.lr
         save_data["avg_r"] = avg_r.__dict__
-        with open(str(OUTPUT_PATH/"run.state"), "w") as file:
+        with open(str(OUTPUT_PATH / "run.state"), "w") as file:
             json.dump(save_data, file)
 
     # update exploration
